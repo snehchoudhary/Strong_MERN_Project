@@ -1,35 +1,78 @@
 const express = require("express");
 
-const upload = require("../middleware/uploadMiddleware");
-
+const upload =
+  require("../middleware/uploadMiddleware");
 
 const {
-    createTask,
-    getTasks,
-    getTaskStats,
-    updateTask,
-    uploadExcel
+  createTask,
+  getTasks,
+  getTaskStats,
+  updateTask,
+  uploadExcel,
+  getRecentTasks
 } = require("../controllers/taskController");
 
-const authMiddleware = require("../middleware/authMiddleware");
+const authMiddleware =
+  require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.post("/", authMiddleware, createTask);
-
-//stats route
-router.get("/stats/summary",authMiddleware,  getTaskStats);
-
-router.get("/:projectId", authMiddleware, getTasks);
-
-
-router.patch("/:id", authMiddleware, updateTask);
+/* ===========================
+   CREATE TASK
+=========================== */
 
 router.post(
-    "/upload",
-    authMiddleware,
-    upload.single("file"),
-    uploadExcel
+  "/",
+  authMiddleware,
+  createTask
+);
+
+/* ===========================
+   TASK STATS
+=========================== */
+
+router.get(
+  "/stats/summary",
+  authMiddleware,
+  getTaskStats
+);
+
+/* ===========================
+   GET TASKS (WITH FILTERS)
+=========================== */
+
+router.get(
+  "/",
+  authMiddleware,
+  getTasks
+);
+
+/* ===========================
+   UPDATE TASK
+=========================== */
+
+router.put(
+  "/:id",
+  authMiddleware,
+  updateTask
+);
+
+/* ===========================
+   UPLOAD EXCEL
+=========================== */
+
+router.post(
+  "/upload",
+  authMiddleware,
+  upload.single("file"),
+  uploadExcel
+);
+
+// Get Recent tasks
+router.get(
+  "/recent",
+  authMiddleware,
+  getRecentTasks
 );
 
 module.exports = router;

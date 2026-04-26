@@ -1,125 +1,283 @@
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
+// import api from "../services/api";
+// import DashboardLayout from "../layouts/DashboardLayout";
+// import ProjectCard from "../components/ProjectCard";
+
+// function Projects() {
+
+//     const [showForm, setShowForm] = useState(false);
+//     const[name, setName]= useState("");
+//     const [ description, setDescription] = useState("");
+//     const [projects, setProjects] = useState([]);
+
+//     //fetch project on load
+//     useEffect(() => {
+//         fetchProjects();
+//     }, []);
+
+//     //fetch function
+//     const fetchProjects = async () => {
+//         try {
+//             const res = await api.get("/projects");
+
+//             setProjects(res.data);
+//         } catch (error) {
+//             console.log(error);
+//         }
+//     };
+
+//     //create project
+//     // const handleCreate = async () => {
+
+//     //     try {
+//     //         await api.post("/projects", {
+//     //             name, 
+//     //             description
+//     //         });
+
+//     //         alert("Project Created");
+
+//     //         setShowForm(false);
+//     //         fetchProjects();  //refresh list
+//     //     } catch (error) {
+//     //         alert("Error creating project");
+//     //     }
+//     // };
+
+
+//     //error checking : 
+//     const handleCreate =async () => {
+//         try {
+//             const res =await api.post("/projects", {
+//                 name, 
+//                 description
+//             });
+
+//             console.log ("Project Created:" ,res.data);
+            
+//             alert("Project Created");
+
+//             setShowForm(false);
+
+//             setName("");
+//             setDescription("");
+//         } catch (error) {
+//             console.log("Create Error:" , error.response?.data);
+
+//             alert("Error creating project");
+//         }
+//     }
+
+//    return (
+//     <DashboardLayout>
+//         <h2 className="text-2xl font-bold mb-6">
+//             My Projects
+//         </h2>
+
+//         <button 
+//         onClick={() => setShowForm(true)}
+//         className="bg-blue-600 text-white px-4 py-2 rounded mb-6 hover:bg-blue-700">
+//             + Create Project
+//         </button>
+
+
+//        {/* form */}
+//         {showForm && (
+//             <div className="bg-white p-6 rounded shadow-md w-96">
+
+//                 <input type="text"
+//                 placeholder="Project Name"
+//                 className="w-full p-2 border mb-4"
+//                 onChange={(e) => 
+//                     setName(e.target.value)
+//                 } />
+
+//                 <textarea 
+//                 placeholder="Description"
+//                 className="w-full p-2 border mb-4"
+//                 onChange={(e) => 
+//                     setDescription(e.target.value)
+//                 }
+//                 />
+
+//                 <button onClick={handleCreate} className="bg-green-600 text-white px-4 py-2 rounded">Create</button>
+
+//             </div>
+//         )}
+
+//         {/* display projects */}
+//         <div className="grid gap-4">
+//             {projects.map((project) => (
+//                 <div 
+//                 key={project._id}
+//                 className="bg-white p-4 rounded shadow">
+
+//                  <h3 className="font-bold text-lg">{project.name}</h3>
+
+//                  <p className="text-gray-600">{project.description}</p>
+//                 </div>
+//             ))}
+
+//         </div>
+//     </DashboardLayout>
+//    )
+// }
+
+// export default Projects;
+
+
+import { useEffect, useState } from "react";
 import api from "../services/api";
 import DashboardLayout from "../layouts/DashboardLayout";
+import { useNavigate } from "react-router-dom";
 
-function Projects() {
+function CreateProject() {
 
-    const [showForm, setShowForm] = useState(false);
-    const[name, setName]= useState("");
-    const [ description, setDescription] = useState("");
-    const [projects, setProjects] = useState([]);
+  const navigate = useNavigate();
 
-    //fetch project on load
-    useEffect(() => {
-        fetchProjects();
-    }, []);
+  const [name, setName] = useState("");
 
-    //fetch function
-    const fetchProjects = async () => {
-        try {
-            const res = await api.get("/projects");
+  const [users, setUsers] =
+    useState([]);
 
-            setProjects(res.data);
-        } catch (error) {
-            console.log(error);
-        }
+  const [assignedTo,
+    setAssignedTo] =
+    useState("");
+
+  useEffect(() => {
+
+    fetchUsers();
+
+  }, []);
+
+  const fetchUsers =
+    async () => {
+
+      try {
+
+        const res =
+          await api.get("/users");
+
+        console.log(
+          "Users response:",
+          res.data
+        );
+
+        setUsers(res.data);
+
+      }
+
+      catch (err) {
+
+        console.error(
+          "Fetch users error:",
+          err
+        );
+
+      }
+
     };
 
-    //create project
-    // const handleCreate = async () => {
+  const handleSubmit =
+    async (e) => {
 
-    //     try {
-    //         await api.post("/projects", {
-    //             name, 
-    //             description
-    //         });
+      e.preventDefault();
 
-    //         alert("Project Created");
+      try {
 
-    //         setShowForm(false);
-    //         fetchProjects();  //refresh list
-    //     } catch (error) {
-    //         alert("Error creating project");
-    //     }
-    // };
+        await api.post(
+          "/projects",
+          {
+            name,
+            assignedTo
+          }
+        );
 
+        navigate("/projects");
 
-    //error checking : 
-    const handleCreate =async () => {
-        try {
-            const res =await api.post("/projects", {
-                name, 
-                description
-            });
+      }
 
-            console.log ("Project Created:" ,res.data);
-            
-            alert("Project Created");
+      catch (err) {
 
-            setShowForm(false);
+        console.error(err);
 
-            setName("");
-            setDescription("");
-        } catch (error) {
-            console.log("Create Error:" , error.response?.data);
+      }
 
-            alert("Error creating project");
-        }
-    }
+    };
 
-   return (
+  return (
+
     <DashboardLayout>
-        <h2 className="text-2xl font-bold mb-6">
-            Projects
-        </h2>
 
-        <button 
-        onClick={() => setShowForm(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded mb-6 hover:bg-blue-700">
-            + Create Project
+      <h2 className="text-2xl font-bold mb-4">
+        Create Project
+      </h2>
+
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
+
+        {/* Project Name */}
+
+        <input
+          type="text"
+          placeholder="Project Name"
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
+          className="border p-2 w-full"
+          required
+        />
+
+        {/* Users Dropdown */}
+
+        <select
+          value={assignedTo}
+          onChange={(e) =>
+            setAssignedTo(
+              e.target.value
+            )
+          }
+          className="border p-2 w-full"
+          required
+        >
+
+          <option value="">
+            Select User
+          </option>
+
+          {users.map(user => (
+
+            <option
+              key={user._id}
+              value={user._id}
+            >
+
+              {user.name}
+
+            </option>
+
+          ))}
+
+        </select>
+
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+
+          Create Project
+
         </button>
 
+      </form>
 
-       {/* form */}
-        {showForm && (
-            <div className="bg-white p-6 rounded shadow-md w-96">
-
-                <input type="text"
-                placeholder="Project Name"
-                className="w-full p-2 border mb-4"
-                onChange={(e) => 
-                    setName(e.target.value)
-                } />
-
-                <textarea 
-                placeholder="Description"
-                className="w-full p-2 border mb-4"
-                onChange={(e) => 
-                    setDescription(e.target.value)
-                }
-                />
-
-                <button onClick={handleCreate} className="bg-green-600 text-white px-4 py-2 rounded">Create</button>
-
-            </div>
-        )}
-
-        {/* display projects */}
-        <div className="grid gap-4">
-            {projects.map((project) => (
-                <div 
-                key={project._id}
-                className="bg-white p-4 rounded shadow">
-
-                 <h3 className="font-bold text-lg">{project.name}</h3>
-
-                 <p className="text-gray-600">{project.description}</p>
-                </div>
-            ))}
-
-        </div>
     </DashboardLayout>
-   )
+
+  );
+
 }
 
-export default Projects;
+export default CreateProject;

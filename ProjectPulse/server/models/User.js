@@ -18,7 +18,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["manager", "lead"],
         default: "manager"
-    }
+    },
+    otp: {
+        type: String
+    },
+
+    otpExpire: {
+        type: Date
+    },
 }, { timestamps: true});
 
 module.exports = mongoose.model("User", userSchema);

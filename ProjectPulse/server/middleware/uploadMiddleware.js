@@ -1,9 +1,21 @@
 const multer = require("multer");
 
-const storage = multer.memoryStorage();
+/* ===========================
+   STORAGE (Memory)
+=========================== */
 
-const upload = multer({
-    storage
-});
+const storage =
+  multer.memoryStorage();
+
+/* ===========================
+   MULTER INSTANCE
+=========================== */
+
+const upload =
+  multer({ storage });
+
+/* ===========================
+   EXPORT
+=========================== */
 
 module.exports = upload;

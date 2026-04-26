@@ -1,0 +1,8 @@
+Flask>=3.0.0
+sentence-transformers>=3.0.1
+torch
+transformers
+numpy
+scikit-learn
+scipy
+# Note: sentence-transformers pulls most; torch for CPU/GPU

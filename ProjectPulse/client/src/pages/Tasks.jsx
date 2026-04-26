@@ -1,293 +1,505 @@
 import DashboardLayout from "../layouts/DashboardLayout";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import api from "../services/api";
 
 function Tasks() {
 
-    const[tasks, setTasks] = useState([]);
-    const [filter, setFilter] = useState("all");
-    const [search, setSearch] = useState("");
-    const [sortBy, setSortBy] = useState("name");
-    const [currentPage, setCurrentPage] = useState(1);
+  const [tasks, setTasks] = useState([]);
 
-    const tasksPerPage = 5;
+  const [filter, setFilter] =
+    useState("all");
 
-    useEffect(() => {
-        fetchTasks();
-    }, []);
+  const [search, setSearch] =
+    useState("");
 
-    const fetchTasks =async () => {
-        try {
+  const [sortBy, setSortBy] =
+    useState("name");
 
-            const res = await api.get("/tasks");
+  const [currentPage,
+    setCurrentPage] =
+    useState(1);
 
-            setTasks(res.data);
-        } catch (error) {
-            console.log(error);
-        }
-    };
+  const tasksPerPage = 5;
 
-    const deleteTask = async (id) => {
-        try {
-            await api.delete (
-                `/tasks/${id}`
-            );
+  /* ===========================
+     FETCH TASKS
+  =========================== */
 
-            fetchTasks();
-        } catch (error) {
-            console.log (error);
-        }
-    };
+  const fetchTasks = async () => {
 
-    const updateStatus = async (id, status) => {
-        try {
-            await api.put (
-                `/tasks/${id}`,
-                {status}
-            );
-            fetchTasks();
-        } catch (error) {
-            console.log(error);
-        }
-    };
+    try {
 
-    //filtering
-    // const filteredTasks = tasks.filter(task => {
-    //     if (filter === "all")
-    //         return true;
+      const params = {
 
-    //     return task.status === filter;
-    // });
+        status:
+          filter !== "all"
+            ? filter
+            : undefined,
 
-    const filteredTasks = tasks.filter(task => {
+        search:
+          search || undefined,
 
-        const matchesSearch = 
-        task.name.toLowerCase().include(search.toLowerCase());
+        sortBy
 
-        const matchesFilter = filter === "all" ? true : task.status === filter;
+      };
 
-        return (
-            matchesSearch && matchesFilter
+      const query =
+        new URLSearchParams(
+          params
+        ).toString();
+
+      const res =
+        await api.get(
+          `/tasks?${query}`
         );
+
+      setTasks(res.data);
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+    }
+
+  };
+
+  /* ===========================
+     AUTO FETCH
+  =========================== */
+
+  useEffect(() => {
+
+    fetchTasks();
+
+  }, [filter, search, sortBy]);
+
+  /* ===========================
+     DELETE TASK
+  =========================== */
+
+  const deleteTask =
+    async (id) => {
+
+      try {
+
+        await api.delete(
+          `/tasks/${id}`
+        );
+
+        fetchTasks();
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
+
+  /* ===========================
+     UPDATE STATUS
+  =========================== */
+
+  const updateStatus =
+    async (id, status) => {
+
+      try {
+
+        await api.put(
+          `/tasks/${id}`,
+          { status }
+        );
+
+        fetchTasks();
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+      }
+
+    };
+
+  /* ===========================
+     EXCEL UPLOAD
+  =========================== */
+
+  const handleFileUpload =
+    async (e) => {
+
+      const file =
+        e.target.files[0];
+
+      if (!file) return;
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "file",
+        file
+      );
+
+      try {
+
+        await api.post(
+          "/tasks/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type":
+                "multipart/form-data"
+            }
+          }
+        );
+
+        alert(
+          "Excel uploaded successfully"
+        );
+
+        fetchTasks();
+
+      }
+
+      catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Upload failed"
+        );
+
+      }
+
+    };
+
+  /* ===========================
+     SORTING
+  =========================== */
+
+  const sortedTasks =
+    [...tasks].sort((a, b) => {
+
+      if (sortBy === "name")
+        return a.name.localeCompare(b.name);
+
+      if (sortBy === "status")
+        return a.status.localeCompare(b.status);
+
+      if (sortBy === "progress")
+        return a.progress - b.progress;
+
+      return 0;
+
     });
 
-    //sort data
-    const sortedTasks = [...filteredTasks].sort((a, b) => {
-        
-        if (sortBy === "name")
-            return a.name.localeCompare(b.name);
+  /* ===========================
+     PAGINATION
+  =========================== */
 
-        if (sortBy === "status")
-            return a.status.localeCompare(b.status);
+  const indexOfLastTask =
+    currentPage * tasksPerPage;
 
-        if (sortBy === "progress")
-            return (
-        a.progress - b.progress);
+  const indexOfFirstTask =
+    indexOfLastTask - tasksPerPage;
 
-        return 0;
-    })
-
-
-
-    // Pagination logic
-    const indexOfLastTask = currentPage*tasksPerPage;
-
-    const indexOfFirstTask = indexOfLastTask - tasksPerPage;
-
-    const currentTasks = sortedTasks.slice (
-        indexOfFirstTask, indexOfLastTask
+  const currentTasks =
+    sortedTasks.slice(
+      indexOfFirstTask,
+      indexOfLastTask
     );
 
-    return (
-        <DashboardLayout>
-            <h2 className="text-2xl font-bold mb-6">
-                Tasks
-            </h2>
+  /* ===========================
+     UI
+  =========================== */
 
+  return (
 
+    <DashboardLayout>
 
-            {/* Filter */}
-            <Select className="mb-4 p-2 border"
-            onChange={(e) => 
-                setFilter(e.target.value)
-            }
-            >
-                <option value="all">All</option>
+      <h2 className="text-2xl font-bold mb-6">
+        Tasks
+      </h2>
 
-                <option value="completed">
-                    Completed
-                </option>
+      {/* Excel Upload */}
 
-                <option value="pending">
-                    Pending
-                </option>
+      <div className="mb-4">
 
-                <option value="in-progress">
-                    In Progress
-                </option>
+        <input
+          type="file"
+          accept=".xlsx, .xls"
+          onChange={handleFileUpload}
+          className="border p-2"
+        />
 
-            </Select>
+      </div>
 
-        {/* Wrap search + sort together */}
+      {/* Filter */}
 
-        <div className="flex gap-2 mb-4">
+      <select
+        className="mb-4 p-2 border"
+        onChange={(e) => {
 
-        
-           <input type="text"
-           placeholder="Search tasks..."
-           className="border p-2 mb-4 w-full"
-           value={search}
-           onChange={(e) => 
-            setSearch(e.target.value)
-           } />
+          setFilter(
+            e.target.value
+          );
 
+          setCurrentPage(1);
 
-           {/* Add sorting dropdown */}
+        }}
+      >
 
-              <select
-              className="border p-2 mb-4 ml-2"
-              onChange={(e) => setSortBy(e.target.value)}
-              >
+        <option value="all">
+          All
+        </option>
 
-                <option value="name">Sort by Name</option>
+        <option value="completed">
+          Completed
+        </option>
 
-                <option value="status">Sort by Status</option>
+        <option value="pending">
+          Pending
+        </option>
 
-                <option value="progress">Sort by Progress</option>
-              </select>
+        <option value="in-progress">
+          In Progress
+        </option>
 
-              </div>
-            {/* Table */}
-            
-            <div className="bg-white rounded shadow">
+      </select>
 
-              <table className="w-full">
-                
-                 <thead className="bg-gray-100">
+      {/* Search + Sort */}
 
-                    <tr>
-                        
-                        <th classname="p-3 text-left">Task</th>
+      <div className="flex gap-2 mb-4">
 
-                        <th classname="p-3">Status</th>
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          className="border p-2 w-full"
+          value={search}
+          onChange={(e) => {
 
-                        <th className="p-3">
-                            Progress
-                        </th>
+            setSearch(
+              e.target.value
+            );
 
-                        <th classname="p-3">
-                            Actions
-                        </th>
-                    </tr>
-                 </thead>
+            setCurrentPage(1);
 
-                 <tbody>
-                    {currentTasks.map(
-                        (task) => (
-                            <tr 
-                            key={task._id}
-                            className="border-t">
+          }}
+        />
 
-                                {/* Task Name */}
+        <select
+          className="border p-2"
+          onChange={(e) => {
 
-                                <td className="p-3">{task.name}</td>
+            setSortBy(
+              e.target.value
+            );
 
-                                {/* Status */}
+            setCurrentPage(1);
 
-                                <td className="p-3">
-                                  <select
-                                  value={task.status}
-                                  onChange={(e) => updateStatus (
-                                    task._id,
-                                    e.target.value
-                                  )} 
-                                  className="border p-1"
-                                  >
+          }}
+        >
 
-                                    <option value="pending">Pending</option>
+          <option value="name">
+            Sort by Name
+          </option>
 
-                                    <option value="in-progress"> In Progress</option>
+          <option value="status">
+            Sort by Status
+          </option>
 
-                                    <option value="completed">Completed</option>
-                                  </select>
-                                </td>
+          <option value="progress">
+            Sort by Progress
+          </option>
 
-                                {/* Progress bar */}
+        </select>
 
-                                 <td className="p-3">
+      </div>
 
-                                    <div className="w-full bg-gray-200 rounded">
+      {/* Table */}
 
-                                        <div className="bg-blue-600 text-white text-xs text-center rounded"
-                                        style={{
-                                            width: task.progress + "%"
-                                        }}> {task.progress}%
+      <div className="bg-white rounded shadow">
 
-                                        </div>
+        <table className="w-full">
 
-                                    </div>
+          <thead className="bg-gray-100">
 
-                                 </td>
+            <tr>
 
-                                 {/* Actions */}
+              <th className="p-3 text-left">
+                Task
+              </th>
 
-                                 <td className="p-3 text-center">
+              <th className="p-3">
+                Status
+              </th>
 
-                                    <button
-                                    onClick={() => deleteTask(task._id)}
-                                    className="bg-red-500 text-white px-3 py-1 rounded">
-                                        Delete
+              <th className="p-3">
+                Progress
+              </th>
 
-                                    </button>
+              <th className="p-3">
+                Actions
+              </th>
 
-                                 </td>
-                            </tr>
+            </tr>
 
-                        )
-                    )}
-                 </tbody>
-              </table>
+          </thead>
 
+          <tbody>
 
-              {/* pagination button */}
+            {currentTasks.map(
+              (task) => (
 
-              <div className="flex justify-center mt-4 gap-2">
-
-                <button 
-                onClick={() => 
-                    setCurrentPage(
-                        currentPage - 1
-                    )
-                }
-                disabled={currentPage === 1}
-                className="px-3 py-1 border"
-                > 
-                Prev
-
-                </button>
-
-                <span>
-                    Page {currentPage}
-                </span>
-
-                <button
-                onClick={() => 
-                    setCurrentPage(
-                        currentPage + 1
-                    )
-                }
-                disabled={
-                    indexOfLastTask >= sortedTasks.length
-                }
-                className="px-3 py-1 border"
+                <tr
+                  key={task._id}
+                  className="border-t"
                 >
-                   Next
-                </button>
 
-              </div>
-            </div>
-        </DashboardLayout>
-    )
+                  {/* Task Name */}
+
+                  <td className="p-3">
+
+                    {task.name}
+
+                  </td>
+
+                  {/* Status */}
+
+                  <td className="p-3">
+
+                    <select
+                      value={task.status}
+                      onChange={(e) =>
+                        updateStatus(
+                          task._id,
+                          e.target.value
+                        )
+                      }
+                      className="border p-1"
+                    >
+
+                      <option value="pending">
+                        Pending
+                      </option>
+
+                      <option value="in-progress">
+                        In Progress
+                      </option>
+
+                      <option value="completed">
+                        Completed
+                      </option>
+
+                    </select>
+
+                  </td>
+
+                  {/* Progress */}
+
+                  <td className="p-3">
+
+                    <div className="w-full bg-gray-200 rounded">
+
+                      <div
+                        className="bg-blue-600 text-white text-xs text-center rounded"
+                        style={{
+                          width:
+                            task.progress + "%"
+                        }}
+                      >
+
+                        {task.progress}%
+
+                      </div>
+
+                    </div>
+
+                  </td>
+
+                  {/* Actions */}
+
+                  <td className="p-3 text-center">
+
+                    <button
+                      onClick={() =>
+                        deleteTask(task._id)
+                      }
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                    >
+
+                      Delete
+
+                    </button>
+
+                  </td>
+
+                </tr>
+
+              )
+            )}
+
+          </tbody>
+
+        </table>
+
+        {/* Pagination */}
+
+        <div className="flex justify-center mt-4 gap-2">
+
+          <button
+            onClick={() =>
+              setCurrentPage(
+                currentPage - 1
+              )
+            }
+            disabled={
+              currentPage === 1
+            }
+            className="px-3 py-1 border"
+          >
+
+            Prev
+
+          </button>
+
+          <span>
+
+            Page {currentPage}
+
+          </span>
+
+          <button
+            onClick={() =>
+              setCurrentPage(
+                currentPage + 1
+              )
+            }
+            disabled={
+              indexOfLastTask >=
+              sortedTasks.length
+            }
+            className="px-3 py-1 border"
+          >
+
+            Next
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </DashboardLayout>
+
+  );
+
 }
 
 export default Tasks;
